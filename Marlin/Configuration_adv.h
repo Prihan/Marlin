@@ -235,7 +235,7 @@
   #define DEFAULT_STEPPER_DEACTIVE_TIME 0 //** PJR - Never auto-disable steppers for a Delta since positions will be lost - unless deliberately sent by controller
 #else
   #define DEFAULT_STEPPER_DEACTIVE_TIME 60
-#endif  
+#endif
 
 #define DEFAULT_MINIMUMFEEDRATE       0.0     // minimum feedrate
 #define DEFAULT_MINTRAVELFEEDRATE     0.0
