@@ -43,17 +43,29 @@
 #elif MB(5DPRINT)
 	#define MACHINE_NAME "Makibox"
 	#define FIRMWARE_URL "https://github.com/ErikZalm/Marlin/"
+#elif MB(BRAINWAVE_PRO)
+	#define MACHINE_NAME "Kossel Pro"
+	#ifndef FIRMWARE_URL
+		#define FIRMWARE_URL "https://github.com/OpenBeamUSA/Marlin/"
+	#endif
 #else
 	#ifdef CUSTOM_MENDEL_NAME
 		#define MACHINE_NAME CUSTOM_MENDEL_NAME
-	#else
-		#define MACHINE_NAME "Mendel"
 	#endif
+#endif
 
-// Default firmware set to Mendel
+
+#ifndef MACHINE_NAME
+	#define MACHINE_NAME "Mendel"
+#endif
+
+#ifndef FIRMWARE_URL
 	#define FIRMWARE_URL "https://github.com/ErikZalm/Marlin/"
 #endif
 
+#ifndef BUILD_VERSION
+	#define BUILD_VERSION "V1; Sprinter/grbl mashup for gen6"
+#endif
 
 #ifndef MACHINE_UUID
    #define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
@@ -103,7 +115,7 @@
 #define MSG_HEATING_COMPLETE                "Heating done."
 #define MSG_BED_HEATING                     "Bed Heating."
 #define MSG_BED_DONE                        "Bed done."
-#define MSG_M115_REPORT                     "FIRMWARE_NAME:Marlin V1; Sprinter/grbl mashup for gen6 FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
+#define MSG_M115_REPORT						"FIRMWARE_NAME:Marlin " BUILD_VERSION " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 #define MSG_COUNT_X                         " Count X: "
 #define MSG_ERR_KILLED                      "Printer halted. kill() called!"
 #define MSG_ERR_STOPPED                     "Printer stopped due to errors. Fix the error and use M999 to restart. (Temperature is reset. Set it after restarting)"
