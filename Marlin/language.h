@@ -29,6 +29,10 @@
   #error "Languages now uses ISO language codes instead of numbers."
 #endif
 
+#ifdef HAS_AUTOMATIC_VERSIONING
+	#include "_Version.h"
+#endif
+
 #define PROTOCOL_VERSION "1.0"
 
 #if MB(ULTIMAKER)|| MB(ULTIMAKER_OLD)|| MB(ULTIMAIN_2)
