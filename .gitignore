@@ -1,14 +1,8 @@
-*.o
-applet/
-*~
-*.orig
-*.rej
-*.bak
+// All of the OS, IDE, compiler stuff has been deleted
+// They are needed, but you should have those in
+// your global .gitignore rather than in
+// a per-project file such as this
 
-# IDE stuff
-atlassian-ide-plugin.xml
-*.iml
-*.idea
-
-# Mac Stuff
-.DS_Store
+// Our automatic versioning scheme generates the following file
+// NEVER put it in the repository
+_Version.h
