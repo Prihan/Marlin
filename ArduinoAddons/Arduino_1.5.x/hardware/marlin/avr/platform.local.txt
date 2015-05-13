@@ -1,1 +1,3 @@
 compiler.cpp.extra_flags=-DHAS_AUTOMATIC_VERSIONING
+recipe.hooks.prebuild.pattern=/usr/local/bin/generate{build.development_stage_flag}_version_for {build.source.path} {build.path}/_Version.h
+

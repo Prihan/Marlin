@@ -5,8 +5,8 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
-name=Brainwave AVR Boards
-version=0.0.0
+name=Marlin AVR Boards
+version=1.5.6
 
 # AVR compile variables
 # ---------------------
