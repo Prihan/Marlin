@@ -1061,7 +1061,8 @@ static void run_z_probe() {
     float start_z = current_position[Z_AXIS];
     long start_steps = st_get_position(Z_AXIS);
 
-    feedrate = homing_feedrate[Z_AXIS]/10;
+    //feedrate = homing_feedrate[Z_AXIS]/10;
+    feedrate = AUTOCAL_PROBERATE *60;
     destination[Z_AXIS] = -10;
     prepare_move_raw();
     st_synchronize();
@@ -1268,18 +1269,51 @@ static void retract_z_probe() {
     st_synchronize();
     #endif //SERVO_ENDSTOPS
 }
-
 /// Probe bed height at position (x,y), returns the measured z value **PJR - Z probe offset must be handled by caller.
 static float probe_pt(float x, float y, float z_before) {
 
-  float probe_z, probe_bed_array[20];
-  int probe_count;
+#ifdef PROBE_AVG
+  int num_probes=PROBE_AVG;
+  float total=0.0;
+  float probe_bed_array[PROBE_AVG];
+#else  
+  float probe_bed_array[20];
   boolean probe_done;
+#endif
+  int probe_count;
+  float probe_z; 
 
   // move to right place
   do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before);
   do_blocking_move_to(x - z_probe_offset[X_AXIS], y - z_probe_offset[Y_AXIS], current_position[Z_AXIS]);
 
+#ifdef PROBE_AVG
+  for(probe_count=0;probe_count<num_probes;probe_count++)
+    {
+    if (probe_count > 0)
+      {
+      //**PJR - Lift the probe before next sample
+      do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS] + Z_RAISE_BETWEEN_PROBINGS);
+      }
+
+#if defined(SERVO_ENDSTOPS) && !defined(Z_PROBE_SLED)
+    engage_z_probe();   // Engage Z Servo endstop if available
+#endif // SERVO_ENDSTOPS && !Z_PROBE_SLED
+
+    run_z_probe();
+    probe_z = current_position[Z_AXIS];
+
+#if defined(SERVO_ENDSTOPS) && !defined(Z_PROBE_SLED)
+    retract_z_probe();
+#endif // SERVO_ENDSTOPS && !Z_PROBE_SLED
+
+    probe_bed_array[probe_count] = probe_z;
+    total += probe_z;
+ 
+    }
+    probe_z = total / num_probes;
+
+#else
   //**PJR - Probe the bed multiple times until two readings match
   probe_count = 0;
   do {
@@ -1326,16 +1360,32 @@ static float probe_pt(float x, float y, float z_before) {
     //SERIAL_PROTOCOL_F(probe_z,5);
     //SERIAL_ECHOLN("");
     } while ((probe_done == false) and (probe_count < 20));
-  /* //**PJR - Remove confusing diagnostic messages
-  SERIAL_PROTOCOLPGM(MSG_BED);
+   //**PJR - Remove confusing diagnostic messages
+ #endif 
+  //SERIAL_PROTOCOLPGM(MSG_BED);
   SERIAL_PROTOCOLPGM(" x: ");
   SERIAL_PROTOCOL(x);
   SERIAL_PROTOCOLPGM(" y: ");
   SERIAL_PROTOCOL(y);
   SERIAL_PROTOCOLPGM(" z: ");
   SERIAL_PROTOCOL(probe_z); //**PJR - This is the measured Z at probe deployed height - confusing to user
-  SERIAL_PROTOCOLPGM("\n");
-  */
+#ifndef PROBE_AVG
+  SERIAL_PROTOCOLPGM(" bed_array[] = [");
+  for(int xx=0;xx < probe_count; xx++) {
+    SERIAL_PROTOCOL(probe_bed_array[xx]);
+    SERIAL_PROTOCOLPGM(",");
+  }
+  
+  SERIAL_PROTOCOLPGM("] \n"); 
+#else
+  SERIAL_PROTOCOLPGM(" bed_array[] = [");
+  for(int xx=0;xx < num_probes; xx++) {
+    SERIAL_PROTOCOL(probe_bed_array[xx]);
+    SERIAL_PROTOCOLPGM(",");
+  }
+  
+  SERIAL_PROTOCOLPGM("] \n");  
+#endif 
   return probe_z;
 }
 
@@ -2045,7 +2095,9 @@ void adj_tower_radius(int tower)
       temp = (bed_level_ox - target) / 2;
       adj_target = target + temp;
       if (((bed_level_ox < adj_target) and (adj_t1_Radius > 0)) or ((bed_level_ox > adj_target) and (adj_t1_Radius < 0))) adj_t1_Radius = -(adj_t1_Radius / 2);
-      if (bed_level_ox == adj_target) t1_done = true;
+      //if (bed_level_ox == adj_target) t1_done = true;
+      temp = bed_level_ox - adj_target;
+      if ((temp <= 0.01) && (temp >= -0.01)) t1_done=true;
       if ((bed_level_ox + 0.0001 > prev_bed_level) and (bed_level_ox - 0.0001 < prev_bed_level) and (adj_target + 0.0001 > prev_target) and (adj_target - 0.0001 < prev_target)) nochange_count ++;
       if (nochange_count > 1)
         {
@@ -2058,7 +2110,7 @@ void adj_tower_radius(int tower)
       SERIAL_ECHO(" ox:");
       SERIAL_PROTOCOL_F(bed_level_ox, 6);
       SERIAL_ECHO(" tower radius adj:");
-      SERIAL_PROTOCOL_F(tower_adj[3], 6);
+      SERIAL_PROTOCOL_F(tower_adj[3], 8);
       if (t1_done == true) SERIAL_ECHOLN(" done:true"); else SERIAL_ECHOLN(" done:false");
       }
 
@@ -2077,7 +2129,9 @@ void adj_tower_radius(int tower)
       temp = (bed_level_oy - target) / 2;
       adj_target = target + temp;
       if (((bed_level_oy < adj_target) and (adj_t2_Radius > 0)) or ((bed_level_oy > adj_target) and (adj_t2_Radius < 0))) adj_t2_Radius = -(adj_t2_Radius / 2);
-      if (bed_level_oy == adj_target) t2_done = true;
+      //if (bed_level_oy == adj_target) t2_done = true;
+      temp = bed_level_oy - adj_target;
+      if ((temp <= 0.01) && (temp >= -0.01)) t2_done=true;
       if ((bed_level_oy + 0.0001 > prev_bed_level) and (bed_level_oy - 0.0001 < prev_bed_level) and (adj_target + 0.0001 > prev_target) and (adj_target - 0.0001 < prev_target)) nochange_count ++;
       if (nochange_count > 1)
         {
@@ -2090,7 +2144,7 @@ void adj_tower_radius(int tower)
       SERIAL_ECHO(" oy:");
       SERIAL_PROTOCOL_F(bed_level_oy,4);
       SERIAL_ECHO(" tower radius adj:");
-      SERIAL_PROTOCOL_F(tower_adj[4], 4);
+      SERIAL_PROTOCOL_F(tower_adj[4], 8);
       if (t2_done == true) SERIAL_ECHOLN(" done:true"); else SERIAL_ECHOLN(" done:false");
       }
 
@@ -2109,7 +2163,10 @@ void adj_tower_radius(int tower)
       temp = (bed_level_oz - target) / 2;
       adj_target = target + temp;
       if (((bed_level_oz < adj_target) and (adj_t3_Radius > 0)) or ((bed_level_oz > adj_target) and (adj_t3_Radius < 0))) adj_t3_Radius = -(adj_t3_Radius / 2);
-      if (bed_level_oz == adj_target) t3_done = true;
+      //if (bed_level_oz == adj_target) t3_done = true;
+      temp = bed_level_ox - adj_target;
+      if ((temp <= 0.01) && (temp >= -0.01)) t3_done=true;
+
       if ((bed_level_oz + 0.0001 > prev_bed_level) and (bed_level_oz - 0.0001 < prev_bed_level) and (adj_target + 0.0001 > prev_target) and (adj_target - 0.0001 < prev_target)) nochange_count ++;
       if (nochange_count > 1)
         {
@@ -2122,7 +2179,7 @@ void adj_tower_radius(int tower)
       SERIAL_ECHO(" oz:");
       SERIAL_PROTOCOL_F(bed_level_oz,6);
       SERIAL_ECHO(" tower radius adj:");
-      SERIAL_PROTOCOL_F(tower_adj[5], 6);
+      SERIAL_PROTOCOL_F(tower_adj[5], 8);
       if (t3_done == true) SERIAL_ECHOLN(" done:true"); else SERIAL_ECHOLN(" done:false");
       }
 
@@ -3013,7 +3070,16 @@ void process_commands()
                 #ifdef DELTA
                 // Avoid probing the corners (outside the round or hexagon print surface) on a delta printer.
                 float distance_from_center = sqrt(xProbe*xProbe + yProbe*yProbe);
+               /* SERIAL_PROTOCOLPGM("DELTA_RADIUS: ");
+                SERIAL_PROTOCOL(DELTA_PROBABLE_RADIUS);
+                SERIAL_PROTOCOLPGM("  X: ");
+                SERIAL_PROTOCOL(xProbe);
+                SERIAL_PROTOCOLPGM(" Y: ");
+                SERIAL_PROTOCOL(yProbe);
+                SERIAL_PROTOCOLPGM(" DIST: ");
+                SERIAL_PROTOCOLLN(distance_from_center); */
                 if (distance_from_center > DELTA_PROBABLE_RADIUS) continue;
+                
                 #endif //DELTA
 
                 float measured_z = probe_pt(xProbe, yProbe, z_before);
@@ -3673,10 +3739,10 @@ void process_commands()
 		}
 	}
 
-	if (verbose_level > 0)   {
-		SERIAL_PROTOCOLPGM("M48 Z-Probe Repeatability test.   Version 2.00\n");
-		SERIAL_PROTOCOLPGM("Full support at: http://3dprintboard.com/forum.php\n");
-	}
+//	if (verbose_level > 0)   {
+//		SERIAL_PROTOCOLPGM("M48 Z-Probe Repeatability test.   Version 2.00\n");
+//		SERIAL_PROTOCOLPGM("Full support at: http://3dprintboard.com/forum.php\n");
+//	}
 
 	if (code_seen('J') || code_seen('j')) {
         	n_samples = code_value();
@@ -3835,6 +3901,7 @@ void process_commands()
                 run_z_probe();
 
 		sample_set[n] = current_position[Z_AXIS]; // **PJR - This s the probe position at bed level - NOT corrected for Z_probe offset
+              
 
 //
 // Get the current mean for the data points we have so far
@@ -3876,6 +3943,7 @@ void process_commands()
 
 		// **PJR - Lift the probe again (raw move is OK since Z only)
         do_blocking_move_to(X_probe_location, Y_probe_location, Z_start_location);
+        delay(500);  //Give FSR time to reset avoid bounce
 
 		if (engage_probe_for_each_reading)  {
         		retract_z_probe();
@@ -3890,27 +3958,33 @@ void process_commands()
 
 //      enable_endstops(true);
 
-	if (verbose_level > 0) {
-		SERIAL_PROTOCOLPGM("Mean: ");
-		SERIAL_PROTOCOL_F(mean, 6);
-		SERIAL_PROTOCOLPGM("\n");
+	SERIAL_PROTOCOLPGM("X, Y, L, Mean, Median, Mode, Low, High, StdDev:");
+	SERIAL_PROTOCOL_F(X_probe_location, 6);
+	SERIAL_PROTOCOLPGM(",");
+        SERIAL_PROTOCOL_F(Y_probe_location, 6);
+	SERIAL_PROTOCOLPGM(",");
+        SERIAL_PROTOCOL_F(n_legs, 6);
+	SERIAL_PROTOCOLPGM(",");
+        SERIAL_PROTOCOL_F(mean, 6);
+	SERIAL_PROTOCOLPGM(",");
         isort(sample_set,n_samples);
-        SERIAL_PROTOCOLPGM("Median: ");
+        //SERIAL_PROTOCOLPGM("Median: ");
         SERIAL_PROTOCOL_F(sample_set[(n_samples/2)], 6);
-        SERIAL_PROTOCOLPGM("\n");
-        SERIAL_PROTOCOLPGM("Mode: ");
+        SERIAL_PROTOCOLPGM(",");
+        //SERIAL_PROTOCOLPGM("Mode: ");
         SERIAL_PROTOCOL_F(probe_mode(sample_set, n_samples), 6);
-        SERIAL_PROTOCOLPGM("\n");
-        SERIAL_PROTOCOLPGM("Range: ");
+        SERIAL_PROTOCOLPGM(",");
+        //SERIAL_PROTOCOLPGM("Range: ");
         SERIAL_PROTOCOL_F(sample_set[0], 6);
-        SERIAL_PROTOCOLPGM(" -> ");
+        SERIAL_PROTOCOLPGM(",");
         SERIAL_PROTOCOL_F(sample_set[(n_samples-1)], 6);
+        SERIAL_PROTOCOLPGM(",");
+        
+        //SERIAL_PROTOCOLPGM("Standard Deviation: ");
+        SERIAL_PROTOCOL_F(sigma, 6);
         SERIAL_PROTOCOLPGM("\n");
-    }
 
-SERIAL_PROTOCOLPGM("Standard Deviation: ");
-SERIAL_PROTOCOL_F(sigma, 6);
-SERIAL_PROTOCOLPGM("\n\n");
+
 
 Sigma_Exit:
         break;
