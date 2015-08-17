@@ -2259,7 +2259,7 @@ void adj_tower_delta(int tower)
         SERIAL_PROTOCOL_F(adj_val,5);
         SERIAL_ECHOLN("");
 
-	} while(adj_val != 0);
+	} while((adj_val > 0.00001) || (adj_val <-0.00001));
 }
 
 float adj_diagrod_length()
