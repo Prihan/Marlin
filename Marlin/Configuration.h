@@ -25,7 +25,7 @@
 // startup. Implementation of an idea by Prof Braino to inform user that any changes made to this
 // build by the user have been successfully uploaded into firmware.
 #define STRING_VERSION_CONFIG_H __DATE__ " " __TIME__ // build date and time
-#define STRING_CONFIG_H_AUTHOR "(ex-nerd/RichCattell/PJR, Kossel Pro)" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "(ex-nerd/RichCattell/PJR/DWB, Kossel Pro FSR)" // Who made the changes.
 
 // SERIAL_PORT selects which serial port should be used for communication with the host.
 // This allows the connection of wireless adapters (for instance) to non-default port pins.
@@ -46,7 +46,7 @@
 #endif
 
 // Define this to set a custom name for your generic Mendel,
-#define CUSTOM_MENDEL_NAME "OB Kossel Pro HBP"
+#define CUSTOM_MENDEL_NAME "OB Kossel Pro FSR"
 
 // Define this to set a unique identifier for this printer, (Used by some programs to differentiate between machines)
 // You can use an online service to generate a random UUID. (eg http://www.uuidgenerator.net/version4)
@@ -91,7 +91,8 @@
 #define DEFAULT_DELTA_RADIUS (DELTA_SMOOTH_ROD_OFFSET-DELTA_EFFECTOR_OFFSET-DELTA_CARRIAGE_OFFSET) //**PJR - was DELTA_RADIUS
 
 // Print surface diameter/2 minus unreachable space (avoid collisions with vertical towers).
-#define DELTA_PRINTABLE_RADIUS 127.0
+//#define DELTA_PRINTABLE_RADIUS 127.0
+#define DELTA_PRINTABLE_RADIUS 120.0
 #define DELTA_PROBABLE_RADIUS (DELTA_PRINTABLE_RADIUS-10)
 #define BED_DIAMETER (DELTA_PROBABLE_RADIUS*2) //170 // mm Probable Radius of (127-10) * 2 = 234
 
@@ -360,7 +361,8 @@ your extruder heater takes 2 minutes to hit the target on heating.
 // The pullups are needed if you directly connect a mechanical endswitch between the signal and ground pins.
 const bool X_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 const bool Y_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
-const bool Z_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
+//const bool Z_MIN_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
+const bool Z_MIN_ENDSTOP_INVERTING = true; // FSR
 const bool X_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 const bool Y_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
 const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic of the endstop.
@@ -436,6 +438,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic o
 
 #define ENABLE_AUTO_BED_LEVELING // Delete the comment to enable (remove // at the start of the line)
 #define Z_PROBE_REPEATABILITY_TEST  // If not commented out, Z-Probe Repeatability test will be included if Auto Bed Leveling is Enabled.
+#define PROBE_AVG 3 // If defined it needs to be a number that will be the number of samples when probing Z that are taken and averaged.n
 
 #ifdef ENABLE_AUTO_BED_LEVELING
 
@@ -503,6 +506,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic o
     //#define TOUCH_PROBE_RETRACT_3_FEEDRATE HOMING_FEEDRATE_Z
 
     // Kossel Pro
+    /* FSR
     #define TOUCH_PROBE_DEPLOY_1_X -105.00 // Move left but not quite so far that we'll bump the belt
     #define TOUCH_PROBE_DEPLOY_1_Y 0.00
     #define TOUCH_PROBE_DEPLOY_1_Z 100.0
@@ -527,7 +531,7 @@ const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic o
     #define TOUCH_PROBE_RETRACT_3_X 0.0  // return to 0,0,100
     #define TOUCH_PROBE_RETRACT_3_Y 0.0
     #define TOUCH_PROBE_RETRACT_3_Z 100.0
-    #define TOUCH_PROBE_RETRACT_3_FEEDRATE HOMING_FEEDRATE_Z
+    #define TOUCH_PROBE_RETRACT_3_FEEDRATE HOMING_FEEDRATE_Z */
 
   #else  // not AUTO_BED_LEVELING_GRID
     // with no grid, just probe 3 arbitrary points.  A simple cross-product
@@ -544,11 +548,14 @@ const bool Z_MAX_ENDSTOP_INVERTING = false; // set to true to invert the logic o
 
   // These are the offsets to the probe relative to the extruder tip (Hotend - Probe)
   // X and Y offsets must be integers
-  #define X_PROBE_OFFSET_FROM_EXTRUDER -23 // KosselPro actual: -22.919
-  #define Y_PROBE_OFFSET_FROM_EXTRUDER -6 // KosselPro actual: -6.304
+  //#define X_PROBE_OFFSET_FROM_EXTRUDER -23 // KosselPro actual: -22.919
+  //#define Y_PROBE_OFFSET_FROM_EXTRUDER -6 // KosselPro actual: -6.304
+  #define X_PROBE_OFFSET_FROM_EXTRUDER 0 // FSR
+  #define Y_PROBE_OFFSET_FROM_EXTRUDER 0 // FSR
   // Kossel Pro note: The correct value is likely -17.45 but I'd rather err on the side of
   // not giving someone a head crash. Use something like G29 Z-0.2 to adjust as needed.
-  #define Z_PROBE_OFFSET_FROM_EXTRUDER -17.25  // Increase this if the first layer is too thin (remember: it's a negative number so increase means closer to zero).
+  //#define Z_PROBE_OFFSET_FROM_EXTRUDER -17.25  // Increase this if the first layer is too thin (remember: it's a negative number so increase means closer to zero).
+  #define Z_PROBE_OFFSET_FROM_EXTRUDER 0  // FSR
 
   #define Z_RAISE_BEFORE_HOMING 4       // (in mm) Raise Z before homing (G28) for Probe Clearance.
                                         // Be sure you have this distance over your Z_MAX_POS in case
